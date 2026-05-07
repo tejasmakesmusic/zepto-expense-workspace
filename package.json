@@ -1,0 +1,25 @@
+{
+  "name": "zepto-expense-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local Zepto invoice downloader, parser, reconciliation workflow, and review dashboard.",
+  "scripts": {
+    "download": "node scripts/zepto_download_invoices.js",
+    "parse": "python scripts/extract_zepto_invoices.py",
+    "reconcile": "node scripts/reconcile_zepto_data.js",
+    "workbook": "python scripts/build_zepto_expense_workbook.py",
+    "workflow": "node scripts/run_zepto_workflow.js",
+    "workflow:skip-download": "node scripts/run_zepto_workflow.js --skip-download",
+    "serve": "node scripts/serve_zepto_workspace.js",
+    "test:js": "node --test scripts/tests/*.test.js",
+    "test:py": "python -m pytest scripts/tests",
+    "test": "npm run test:js && npm run test:py"
+  },
+  "engines": {
+    "node": ">=20",
+    "python": ">=3.12"
+  },
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

@@ -1,0 +1,108 @@
+Seller Name: Commodum Groceries Private LimitedGround Floor 37/23/2/1, Village-Choma, Palam Vihar, Gurgaon, Haryana-122017GSTIN: 06AAKCC1645G1ZT
+FSSAI: 12822999000310
+TAX INVOICE/BILL OF SUPPLY
+Invoice No.: 26026C0000797735
+Order No.: KRGGOVNWG59225A
+Place Of Supply : HARYANA (6)
+Date : 06-02-2026
+Bill To
+Ship To
+tejaswa sharma
+sec i-133, crematorium, Block I, Pocket I, Palam Vihar, Gurugram,
+Haryana 122017, India
+sec i-133, crematorium, Block I, Pocket I, Palam Vihar, Gurugram,
+Haryana 122017, India
+SR
+No
+Item &
+Description
+Unit
+MRP/RSP
+HSN
+Qty
+Product
+Rate
+Disc.
+Taxable
+Amt.
+CGST
+S/UT
+GST
+CGST
+Amt.
+S/UT
+GST
+Amt.
+Cess
+Cess
+Amt.
+Total
+Amt.
+1
+Brooke
+Bond Red
+Label
+Natural
+Care Tea 1
+pack (250
+g)
+160.00
+09023020
+1
+152.37
+13.12%
+132.38
+2.50%
+2.50%
+3.31
+3.31
+0.00%
++ 0.00
+0.00
+139.00
+2
+Eggs by
+Henfruit -
+Max
+Protein
+Specialty
+Eggs 1 pack
+(10 pcs)
+160.00
+04072900
+1
+159.99
+35.62%
+103.00
+0.00%
+0.00%
+0.00
+0.00
+0.00%
++ 0.00
+0.00
+103.00
+235.38
+3.31
+3.31
+0.00
+242.00
+Item Total
+242.00
+Invoice Value
+242.00
+Whether GST is payable on reverse-charge - No.
+For IMEI / Serial number information, please refer to packaging / warranty slip.
+Note: Effective 1st Feb 2026, The valuation of the tobacco and pan masala products is made in
+accordance with Rule 31D of the CGST Rules, 2017
+Order Delivered From -
+HOLISOL LOGISTICS PRIVATE LIMITED
+Ground Floor 37/23/2/1, Village-Choma, Palam Vihar, Gurgaon, Haryana-
+122017
+FSSAI: 10824005001551
+E-commerce Platform (FBO) Information -
+ZEPTO MARKETPLACE PRIVATE LIMITED
+First Floor, 773, Sarjapur Main Road, Kaikondarahalli, Bellandur, Bangalore,
+Karnataka, India 560103
+FSSAI Lic. No: 11224999000872
+Email: support@zeptonow.com

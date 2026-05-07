@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zepto Data Workspace</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="workspace-shell" id="workspace-shell">
+      <aside class="sidebar">
+        <div class="workspace-switcher">
+          <div class="brand-mark" title="Zepto Workspace">Z</div>
+          <div class="workspace-switcher__text">
+            <strong>Zepto Workspace</strong>
+            <span>Local data review</span>
+          </div>
+          <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
+            <span class="sidebar-toggle__icon">‹</span>
+          </button>
+        </div>
+        <label class="command-search" for="command-search">
+          <span class="command-search__icon">/</span>
+          <input id="command-search" type="search" placeholder="Search or press /">
+        </label>
+        <nav class="nav-list">
+          <div class="nav-section">
+            <p class="nav-section-label">Favorites</p>
+            <button class="nav-button is-active" data-view="overview" type="button" title="Review Queue"><span class="nav-icon">H</span><span class="nav-label">Review Queue</span></button>
+            <button class="nav-button" data-view="workbench" type="button" title="Needs Attention"><span class="nav-icon">R</span><span class="nav-label">Needs Attention</span></button>
+            <button class="nav-button" data-view="split-review" type="button" title="Split-ready"><span class="nav-icon">S</span><span class="nav-label">Split-ready</span></button>
+          </div>
+          <div class="nav-section">
+            <p class="nav-section-label">Objects</p>
+            <button class="nav-button" data-view="orders" type="button" title="Orders"><span class="nav-icon">O</span><span class="nav-label">Orders</span></button>
+            <button class="nav-button" data-view="line-items" type="button" title="Line Items"><span class="nav-icon">L</span><span class="nav-label">Line Items</span></button>
+            <button class="nav-button" data-view="exceptions" type="button" title="Exceptions"><span class="nav-icon">!</span><span class="nav-label">Exceptions</span></button>
+            <button class="nav-button" data-view="data-sources" type="button" title="Data Sources"><span class="nav-icon">D</span><span class="nav-label">Data Sources</span></button>
+          </div>
+        </nav>
+        <div class="sidebar-footer" id="sidebar-summary"></div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow" id="page-kicker">Review workflow</p>
+            <h2 id="page-title">Zepto Data Workspace</h2>
+            <p class="page-subtitle" id="page-subtitle">Loading data...</p>
+          </div>
+          <div class="header-actions">
+            <div class="sync-mini-status" id="sync-mini-status">Sync idle</div>
+            <button class="secondary-button" id="refresh-button" type="button">Refresh Data</button>
+            <button class="primary-button" id="sync-button" type="button">Sync from Zepto</button>
+          </div>
+        </header>
+
+        <section class="toolbar" id="toolbar"></section>
+        <section class="content-panel" id="content"></section>
+      </main>
+
+      <aside class="detail-drawer is-hidden" id="detail-drawer"></aside>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
