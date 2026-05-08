@@ -7,6 +7,13 @@ const { URL } = require("node:url");
 const { loadWorkspaceDataset } = require("./lib/zepto_workspace_data");
 const { readAnnotations, writeOrderAnnotation, writeLineItemAnnotation } = require("./lib/zepto_review_annotations");
 const { createSyncManager } = require("./lib/zepto_sync_job");
+const {
+  publicSettings,
+  readAiSettings,
+  runAiAction,
+  testAiSettings,
+  writeAiSettings,
+} = require("./lib/zepto_ai_assistant");
 
 function json(res, statusCode, payload) {
   res.writeHead(statusCode, { "content-type": "application/json; charset=utf-8" });
@@ -129,6 +136,93 @@ async function handleApiRequest(req, res, url, paths, syncManager) {
 
   if (req.method === "GET" && url.pathname === "/api/dataset") {
     json(res, 200, await loadWorkspaceDataset({ baseDir: paths.baseDir }));
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/ai/settings") {
+    json(res, 200, publicSettings(await readAiSettings(paths.baseDir)));
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai/settings") {
+    const rawBody = await readBody(req);
+    let patch;
+    try {
+      patch = JSON.parse(rawBody || "{}");
+    } catch {
+      badRequest(res, "Invalid JSON body");
+      return true;
+    }
+    json(res, 200, publicSettings(await writeAiSettings(paths.baseDir, patch)));
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai/test") {
+    try {
+      json(res, 200, await testAiSettings(paths.baseDir));
+    } catch (error) {
+      json(res, error.statusCode || 400, { error: error.message || String(error) });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/ai/run/")) {
+    const action = decodeURIComponent(url.pathname.slice("/api/ai/run/".length));
+    const rawBody = await readBody(req);
+    let requestBody;
+    try {
+      requestBody = JSON.parse(rawBody || "{}");
+    } catch {
+      badRequest(res, "Invalid JSON body");
+      return true;
+    }
+    try {
+      const dataset = await loadWorkspaceDataset({ baseDir: paths.baseDir });
+      json(res, 200, await runAiAction({
+        baseDir: paths.baseDir,
+        dataset,
+        action,
+        requestBody,
+      }));
+    } catch (error) {
+      json(res, error.statusCode || 500, { error: error.message || String(error) });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ai/apply-line-item-suggestions") {
+    const rawBody = await readBody(req);
+    let requestBody;
+    try {
+      requestBody = JSON.parse(rawBody || "{}");
+    } catch {
+      badRequest(res, "Invalid JSON body");
+      return true;
+    }
+    const suggestions = Array.isArray(requestBody.suggestions) ? requestBody.suggestions : [];
+    const applied = [];
+    for (const suggestion of suggestions) {
+      const lineItemKey = String(suggestion.line_item_key || "");
+      if (!lineItemKey) {
+        continue;
+      }
+      const patch = {
+        expense_category: suggestion.expense_category || "",
+        split_type: suggestion.split_type || "",
+        split_with: suggestion.split_with || "",
+        notes: suggestion.notes || suggestion.reason || "",
+        ready_for_splitwise: suggestion.ready_for_splitwise === true,
+        review_status: suggestion.ready_for_splitwise === true ? "reviewed" : "needs_review",
+        review_reason: suggestion.reason || "Suggested by AI assistant",
+      };
+      const annotations = await writeLineItemAnnotation(paths.annotationsPath, lineItemKey, patch);
+      applied.push({ line_item_key: lineItemKey, annotation: annotations.lineItems[lineItemKey] || {} });
+    }
+    json(res, 200, {
+      ok: true,
+      applied,
+      dataset: await loadWorkspaceDataset({ baseDir: paths.baseDir }),
+    });
     return true;
   }
 

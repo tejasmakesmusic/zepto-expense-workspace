@@ -42,3 +42,41 @@ export function saveLineItemAnnotation(lineItemKey, patch) {
     body: JSON.stringify(patch),
   });
 }
+
+export function fetchAiSettings() {
+  return fetchJson("/api/ai/settings");
+}
+
+export function saveAiSettings(patch) {
+  return fetchJson("/api/ai/settings", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(patch),
+  });
+}
+
+export function testAiConnection() {
+  return fetchJson("/api/ai/test", { method: "POST" });
+}
+
+export function runAiAction(action, payload = {}) {
+  return fetchJson(`/api/ai/run/${encodeURIComponent(action)}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function applyLineItemSuggestions(suggestions) {
+  return fetchJson("/api/ai/apply-line-item-suggestions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ suggestions }),
+  });
+}

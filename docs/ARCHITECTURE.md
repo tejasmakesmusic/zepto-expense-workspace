@@ -29,8 +29,21 @@ flowchart LR
 - Reconciliation layer: `scripts/lib/zepto_reconciliation.js` merges captured orders, downloads, parsed invoices, and fallback status.
 - Dataset layer: `scripts/lib/zepto_workspace_data.js` builds the dashboard dataset, line item view, source metadata, and workbench issues.
 - Review layer: `scripts/lib/zepto_review_annotations.js` persists order and line-item annotations in generated JSON.
+- AI layer: `scripts/lib/zepto_ai_assistant.js` redacts local data, calls the selected OpenAI or Anthropic provider, and normalizes staged suggestions.
 - UI layer: `web/zepto-workspace/` is a static JavaScript app served by `scripts/serve_zepto_workspace.js`.
 - Export layer: `scripts/build_zepto_expense_workbook.py` writes the review workbook with openpyxl.
+
+## AI Data Flow
+
+AI features are optional and local-key based:
+
+1. User saves provider settings in the dashboard.
+2. Server stores settings in `outputs/zepto_ai_settings.json`.
+3. AI action routes load the current local dataset.
+4. Redaction removes names, addresses, GSTINs, invoice file paths, and raw private fields by default.
+5. The provider receives only the redacted action payload.
+6. Returned suggestions are displayed for review.
+7. Applying line-item suggestions writes normal annotations through the existing annotation path.
 
 ## Testing
 

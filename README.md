@@ -50,6 +50,20 @@ npm.cmd run workflow:skip-download
 - `npm run serve` starts the local dashboard at `http://127.0.0.1:4317`.
 - `npm run test` runs JavaScript and Python tests.
 
+## Optional AI Features
+
+The dashboard has an `AI Assistant` view. Users can bring their own OpenAI or Anthropic API key to:
+
+- auto-categorize invoice line items
+- explain invoice/order mismatches
+- suggest Splitwise-ready tags
+- summarize monthly spending
+- detect unusual purchases or duplicate invoices
+- structure messy HTML fallback captures
+- ask natural-language questions about the local dataset
+
+AI suggestions are staged for review. They are not applied to annotations until the user clicks Apply.
+
 ## Repository Map
 
 - `scripts/zepto_download_invoices.js` - Playwright workflow for Zepto order and invoice capture.
@@ -57,6 +71,7 @@ npm.cmd run workflow:skip-download
 - `scripts/reconcile_zepto_data.js` - reconciles orders, downloads, parsed invoices, and HTML fallback captures.
 - `scripts/build_zepto_expense_workbook.py` - builds the review workbook with openpyxl.
 - `scripts/serve_zepto_workspace.js` - local HTTP server and dashboard API.
+- `scripts/lib/zepto_ai_assistant.js` - optional OpenAI/Anthropic AI assistant layer with redaction.
 - `scripts/lib/` - reusable parsing, reconciliation, sync, insight, and annotation helpers.
 - `web/zepto-workspace/` - static browser dashboard.
 - `scripts/tests/` - Node and Python tests with redacted text fixtures.

@@ -306,6 +306,7 @@ function renderViewTabs(state) {
     ["exceptions", "Exceptions"],
     ["line-items", "Line items"],
     ["split-review", "Split review"],
+    ["ai-assistant", "AI assistant"],
     ["data-sources", "Data sources"],
   ];
   return `
@@ -835,6 +836,208 @@ function renderLineItemsView(state, lineItems, summary, paginationSummary) {
   `;
 }
 
+function renderAiSettings(state) {
+  const settings = state.ai?.settings || {};
+  const running = Boolean(state.ai?.runningAction);
+  return `
+    <section class="panel ai-settings-panel">
+      <div class="panel-header">
+        <div>
+          <h3>AI settings</h3>
+          <p>Bring your own OpenAI or Anthropic key. Settings are stored locally in ignored output files for this dashboard version.</p>
+        </div>
+        <span class="mini-badge ${settings.hasApiKey ? "mini-badge--good" : "mini-badge--warn"}">${settings.hasApiKey ? "Key saved" : "No key"}</span>
+      </div>
+      <form class="ai-settings-form" id="ai-settings-form">
+        <label>
+          <span>Provider</span>
+          <select name="provider">
+            <option value="">Choose provider</option>
+            <option value="openai" ${settings.provider === "openai" ? "selected" : ""}>OpenAI</option>
+            <option value="anthropic" ${settings.provider === "anthropic" ? "selected" : ""}>Anthropic</option>
+          </select>
+        </label>
+        <label>
+          <span>Model</span>
+          <input name="model" type="text" value="${escapeHtml(settings.model || "")}" placeholder="gpt-4.1-mini or claude-3-5-haiku-latest">
+        </label>
+        <label>
+          <span>API key ${settings.apiKeyPreview ? `(${escapeHtml(settings.apiKeyPreview)})` : ""}</span>
+          <input name="api_key" type="password" placeholder="${settings.hasApiKey ? "Leave blank to keep saved key" : "Paste API key"}">
+        </label>
+        <label class="checkbox-row">
+          <input name="redact_private_fields" type="checkbox" ${settings.redactPrivateFields !== false ? "checked" : ""}>
+          <span>Redact names, addresses, GSTINs, and raw invoice fields by default</span>
+        </label>
+        <label class="checkbox-row">
+          <input name="allow_raw_html_fallback" type="checkbox" ${settings.allowRawHtmlFallback ? "checked" : ""}>
+          <span>Allow raw HTML fallback text in AI prompts</span>
+        </label>
+        <div class="ai-settings-actions">
+          <button class="primary-button" type="submit" ${running ? "disabled" : ""}>Save settings</button>
+          <button class="secondary-button" type="button" data-ai-test ${running || !settings.hasApiKey ? "disabled" : ""}>Test connection</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderAiActions(state) {
+  const runningAction = state.ai?.runningAction || "";
+  const busy = Boolean(runningAction);
+  const actionButtons = [
+    ["categorize", "Auto-categorize line items", "Suggest categories, split types, and readiness tags."],
+    ["mismatches", "Explain mismatches", "Explain invoice/order mismatches and next actions."],
+    ["monthlySummary", "Summarize monthly spending", "Generate a compact month/category summary."],
+    ["anomalies", "Detect unusual or duplicate items", "Find repeated invoices, odd amounts, and review risks."],
+    ["htmlFallback", "Structure HTML fallbacks", "Turn messy fallback captures into structured order context."],
+  ];
+  return `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>AI actions</h3>
+          <p>Suggestions are staged for review. They do not overwrite annotations until you apply them.</p>
+        </div>
+      </div>
+      <div class="ai-action-grid">
+        ${actionButtons.map(([action, label, detail]) => `
+          <button class="ai-action-card" data-ai-action="${escapeHtml(action)}" type="button" ${busy ? "disabled" : ""}>
+            <strong>${escapeHtml(label)}</strong>
+            <span>${escapeHtml(runningAction === action ? "Running..." : detail)}</span>
+          </button>
+        `).join("")}
+      </div>
+      <div class="ai-query-box">
+        <label>
+          <span>Ask a question about local data</span>
+          <input id="ai-query-input" type="text" value="${escapeHtml(state.ai?.query || "")}" placeholder="show shared grocery expenses from March">
+        </label>
+        <button class="primary-button" data-ai-action="query" type="button" ${busy ? "disabled" : ""}>Ask</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderAiResult(state) {
+  const result = state.ai?.result;
+  const error = state.ai?.error || "";
+  const runningAction = state.ai?.runningAction || "";
+  if (error) {
+    return `<section class="panel ai-result-panel"><h3>AI result</h3><div class="empty-state"><h3>AI request failed</h3><p>${escapeHtml(error)}</p></div></section>`;
+  }
+  if (runningAction) {
+    return `<section class="panel ai-result-panel"><h3>AI result</h3><div class="empty-state"><h3>Working...</h3><p>${escapeHtml(titleizeLabel(runningAction))} is running.</p></div></section>`;
+  }
+  if (!result) {
+    return `<section class="panel ai-result-panel"><h3>AI result</h3><div class="empty-state"><h3>No result yet</h3><p>Run an AI action to stage suggestions or generate an answer.</p></div></section>`;
+  }
+  if (result.action === "categorize") {
+    const suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
+    return `
+      <section class="panel ai-result-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Line-item suggestions</h3>
+            <p>${escapeHtml(`${suggestions.length} suggestions ready for review.`)}</p>
+          </div>
+          <button class="primary-button" data-ai-apply-line-items type="button" ${suggestions.length ? "" : "disabled"}>Apply all</button>
+        </div>
+        <div class="table-shell">
+          <table class="orders-table ai-suggestions-table">
+            <thead>
+              <tr>
+                <th>Item key</th>
+                <th>Category</th>
+                <th>Split</th>
+                <th>Ready</th>
+                <th>Confidence</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${suggestions.map((suggestion) => `
+                <tr>
+                  <td><span class="mono-text">${escapeHtml(suggestion.line_item_key)}</span></td>
+                  <td>${escapeHtml(suggestion.expense_category || "-")}</td>
+                  <td>${escapeHtml(suggestion.split_type || "-")}</td>
+                  <td>${suggestion.ready_for_splitwise ? '<span class="mini-badge mini-badge--good">Ready</span>' : '<span class="mini-badge mini-badge--warn">Review</span>'}</td>
+                  <td>${escapeHtml(formatConfidence(suggestion.confidence))}</td>
+                  <td>${escapeHtml(suggestion.reason || suggestion.notes || "-")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+  if (result.action === "mismatches") {
+    const explanations = Array.isArray(result.explanations) ? result.explanations : [];
+    return `
+      <section class="panel ai-result-panel">
+        <h3>Mismatch explanations</h3>
+        <div class="ai-card-list">
+          ${explanations.map((item) => `
+            <article class="ai-result-card">
+              <strong>${escapeHtml(item.order_id)}</strong>
+              <p>${escapeHtml(item.summary || item.likely_reason || "-")}</p>
+              <span>${escapeHtml(item.suggested_action || "")}</span>
+            </article>
+          `).join("") || '<p class="muted-text">No explanations returned.</p>'}
+        </div>
+      </section>
+    `;
+  }
+  if (result.action === "anomalies") {
+    const anomalies = Array.isArray(result.anomalies) ? result.anomalies : [];
+    return `
+      <section class="panel ai-result-panel">
+        <h3>Anomalies and duplicates</h3>
+        <div class="ai-card-list">
+          ${anomalies.map((item) => `
+            <article class="ai-result-card">
+              <strong>${escapeHtml(item.title || item.type)}</strong>
+              <p>${escapeHtml(item.detail || "-")}</p>
+              <span>${escapeHtml(formatConfidence(item.severity))}</span>
+            </article>
+          `).join("") || '<p class="muted-text">No anomalies returned.</p>'}
+        </div>
+      </section>
+    `;
+  }
+  if (result.action === "apply" || result.action === "settings" || result.action === "test") {
+    return `<section class="panel ai-result-panel"><h3>AI result</h3><div class="empty-state"><h3>Done</h3><p>${escapeHtml(result.message || "Complete.")}</p></div></section>`;
+  }
+  const answer = result.answer || result.summary || "";
+  const rows = Array.isArray(result.rows) ? result.rows : [];
+  return `
+    <section class="panel ai-result-panel">
+      <h3>${escapeHtml(result.action === "query" ? "Answer" : "AI summary")}</h3>
+      <p class="ai-answer">${escapeHtml(answer || JSON.stringify(result))}</p>
+      ${rows.length ? `
+        <div class="simple-table">
+          ${rows.map((row) => `
+            <div class="simple-row"><span>${escapeHtml(row.label || row.order_id || row.line_item_key || "-")}</span><span>${escapeHtml(row.value || "")}</span></div>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${Array.isArray(result.highlights) ? `<ul class="feature-list">${result.highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+      ${Array.isArray(result.recommended_actions) ? `<ul class="feature-list">${result.recommended_actions.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+    </section>
+  `;
+}
+
+function renderAiAssistant(state) {
+  return `
+    <section class="view-section">
+      ${renderAiSettings(state)}
+      ${renderAiActions(state)}
+      ${renderAiResult(state)}
+    </section>
+  `;
+}
+
 function renderDataSources(state) {
   const { sources } = state.dataset;
   return `
@@ -916,6 +1119,7 @@ export function renderApp(elements, state, visibleOrders = [], months = [], line
     workbench: "Workbench",
     orders: "Orders",
     "line-items": "Line Items",
+    "ai-assistant": "AI Assistant",
     exceptions: "Exceptions",
     "split-review": "Split Review",
     "data-sources": "Data Sources",
@@ -925,6 +1129,7 @@ export function renderApp(elements, state, visibleOrders = [], months = [], line
     workbench: "Resolve invoice, reconciliation, retry, and split-readiness issues from one queue.",
     orders: "Browse every in-scope order with invoice, fallback, and split review context in one place.",
     "line-items": "Inspect parsed invoice rows, line totals, categories, and parse coverage across orders.",
+    "ai-assistant": "Use your own AI key to stage categories, split tags, summaries, anomaly checks, and local-data answers.",
     exceptions: "A focused queue for mismatches and missing-invoice cases.",
     "split-review": "Capture the categorization and split decisions you want to keep separate from the raw Zepto exports.",
     "data-sources": "Audit where the current dataset came from and open the source artifacts directly.",
@@ -984,6 +1189,8 @@ export function renderApp(elements, state, visibleOrders = [], months = [], line
     );
   } else if (state.currentView === "workbench") {
     elements.content.innerHTML = renderWorkbenchView(state, workbenchIssues, paginationSummary);
+  } else if (state.currentView === "ai-assistant") {
+    elements.content.innerHTML = renderAiAssistant(state);
   } else if (state.currentView === "data-sources") {
     elements.content.innerHTML = renderDataSources(state);
   } else {

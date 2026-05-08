@@ -1,10 +1,15 @@
 import {
+  applyLineItemSuggestions,
   fetchDataset,
+  fetchAiSettings,
   fetchSyncLogs,
   fetchSyncStatus,
+  runAiAction,
   saveAnnotation,
+  saveAiSettings,
   saveLineItemAnnotation,
   startSync,
+  testAiConnection,
 } from "/api.js";
 import {
   createInitialState,
@@ -105,6 +110,20 @@ const state = {
     summary: {},
     logs: [],
     error: "",
+  },
+  ai: {
+    settings: {
+      provider: "",
+      model: "",
+      hasApiKey: false,
+      apiKeyPreview: "",
+      redactPrivateFields: true,
+      allowRawHtmlFallback: false,
+    },
+    runningAction: "",
+    error: "",
+    result: null,
+    query: "",
   },
 };
 
@@ -243,8 +262,29 @@ function replaceDataset(dataset, patch = {}) {
     isSaving: false,
     loading: false,
     sync: state.sync,
+    ai: state.ai,
     ...patch,
   });
+}
+
+async function refreshAiSettings() {
+  try {
+    const settings = await fetchAiSettings();
+    patchState(state, {
+      ai: {
+        ...state.ai,
+        settings,
+        error: "",
+      },
+    });
+  } catch (error) {
+    patchState(state, {
+      ai: {
+        ...state.ai,
+        error: error.message || "Could not load AI settings.",
+      },
+    });
+  }
 }
 
 function reconcilePreservedFilters(filters, dataset) {
@@ -417,6 +457,85 @@ function render() {
       resetPagination(state);
       render();
     });
+  });
+
+  elements.content.querySelector("#ai-settings-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const patch = {
+      provider: form.get("provider") || "",
+      model: form.get("model") || "",
+      apiKey: form.get("api_key") || undefined,
+      redactPrivateFields: form.get("redact_private_fields") === "on",
+      allowRawHtmlFallback: form.get("allow_raw_html_fallback") === "on",
+    };
+    if (!patch.apiKey) {
+      delete patch.apiKey;
+    }
+    patchState(state, { ai: { ...state.ai, runningAction: "settings", error: "" } });
+    render();
+    try {
+      const settings = await saveAiSettings(patch);
+      patchState(state, { ai: { ...state.ai, settings, runningAction: "", error: "", result: { action: "settings", message: "AI settings saved." } } });
+      render();
+    } catch (error) {
+      patchState(state, { ai: { ...state.ai, runningAction: "", error: error.message || "Could not save AI settings." } });
+      render();
+    }
+  });
+
+  elements.content.querySelector("[data-ai-test]")?.addEventListener("click", async () => {
+    patchState(state, { ai: { ...state.ai, runningAction: "test", error: "" } });
+    render();
+    try {
+      const result = await testAiConnection();
+      patchState(state, { ai: { ...state.ai, settings: result.settings || state.ai.settings, runningAction: "", result: { action: "test", message: result.message || "Connected." } } });
+      render();
+    } catch (error) {
+      patchState(state, { ai: { ...state.ai, runningAction: "", error: error.message || "Could not connect to AI provider." } });
+      render();
+    }
+  });
+
+  elements.content.querySelectorAll("[data-ai-action]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const action = button.dataset.aiAction;
+      const question = elements.content.querySelector("#ai-query-input")?.value || "";
+      patchState(state, { ai: { ...state.ai, runningAction: action, error: "", query: question } });
+      render();
+      try {
+        const result = await runAiAction(action, { question });
+        patchState(state, { ai: { ...state.ai, runningAction: "", result, error: "" } });
+        render();
+      } catch (error) {
+        patchState(state, { ai: { ...state.ai, runningAction: "", error: error.message || "AI action failed." } });
+        render();
+      }
+    });
+  });
+
+  elements.content.querySelector("[data-ai-apply-line-items]")?.addEventListener("click", async () => {
+    const suggestions = Array.isArray(state.ai.result?.suggestions) ? state.ai.result.suggestions : [];
+    if (!suggestions.length) {
+      return;
+    }
+    patchState(state, { ai: { ...state.ai, runningAction: "apply", error: "" } });
+    render();
+    try {
+      const result = await applyLineItemSuggestions(suggestions);
+      replaceDataset(result.dataset, {
+        currentView: "ai-assistant",
+        ai: {
+          ...state.ai,
+          runningAction: "",
+          result: { action: "apply", message: `Applied ${result.applied?.length || 0} line-item suggestions.` },
+        },
+      });
+      render();
+    } catch (error) {
+      patchState(state, { ai: { ...state.ai, runningAction: "", error: error.message || "Could not apply suggestions." } });
+      render();
+    }
   });
 
   elements.content.querySelector("#pagination-page-size")?.addEventListener("change", (event) => {
@@ -617,10 +736,11 @@ async function load() {
   }
   patchState(state, { loading: true, error: "" });
   try {
-    const [dataset, syncStatus, syncLogs] = await Promise.all([
+    const [dataset, syncStatus, syncLogs, aiSettings] = await Promise.all([
       fetchDataset(),
       fetchSyncStatus().catch(() => null),
       fetchSyncLogs().catch(() => ({ lines: [] })),
+      fetchAiSettings().catch(() => null),
     ]);
     const previousView = state.currentView;
     const previousSync = state.sync;
@@ -629,6 +749,10 @@ async function load() {
       sync: syncStatus
         ? normalizeSyncState(syncStatus, Array.isArray(syncLogs?.lines) ? syncLogs.lines : [])
         : previousSync,
+      ai: {
+        ...state.ai,
+        settings: aiSettings || state.ai.settings,
+      },
     });
     if (state.sync.status === "running" || state.sync.status === "starting") {
       scheduleSyncPolling();

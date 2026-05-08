@@ -482,6 +482,8 @@ a {
 .filter-grid label,
 .annotation-form label,
 .line-item-editor label,
+.ai-settings-form label,
+.ai-query-box label,
 .line-item-editor__item {
   display: grid;
   gap: 5px;
@@ -490,6 +492,8 @@ a {
 .filter-grid span,
 .annotation-form span,
 .line-item-editor span,
+.ai-settings-form span,
+.ai-query-box span,
 .line-item-editor p {
   margin: 0;
   color: var(--muted);
@@ -502,7 +506,10 @@ a {
 .annotation-form select,
 .annotation-form textarea,
 .line-item-editor input,
-.line-item-editor select {
+.line-item-editor select,
+.ai-settings-form input,
+.ai-settings-form select,
+.ai-query-box input {
   min-height: 32px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -562,6 +569,8 @@ a {
 .sync-panel,
 .workbench-card,
 .line-item-editor,
+.ai-action-card,
+.ai-result-card,
 .suggestion-block {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1029,6 +1038,91 @@ a {
   padding: 12px;
 }
 
+.ai-settings-panel,
+.ai-result-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-settings-form {
+  display: grid;
+  grid-template-columns: 150px minmax(180px, 1fr) minmax(220px, 1.2fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.ai-settings-form .checkbox-row {
+  grid-column: span 2;
+}
+
+.ai-settings-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-action-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ai-action-card {
+  min-height: 96px;
+  padding: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.ai-action-card:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.ai-action-card:disabled {
+  cursor: default;
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+
+.ai-action-card span,
+.ai-result-card span,
+.ai-answer {
+  color: var(--muted);
+}
+
+.ai-query-box {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.ai-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-result-card {
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.ai-result-card p {
+  margin: 0;
+  color: var(--text);
+}
+
+.ai-suggestions-table {
+  min-width: 980px;
+}
+
 .muted-editor {
   color: var(--muted);
 }
@@ -1240,6 +1334,9 @@ a {
   .compact-metric-strip,
   .sync-grid,
   .annotation-form,
+  .ai-settings-form,
+  .ai-action-grid,
+  .ai-query-box,
   .line-item-editor,
   .kv-grid,
   .suggestion-grid,
