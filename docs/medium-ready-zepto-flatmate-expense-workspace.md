@@ -116,3 +116,43 @@ If this solved a real problem for you, please:
 - Star the repo: [github.com/tejasmakesmusic/zepto-expense-workspace](https://github.com/tejasmakesmusic/zepto-expense-workspace)
 - Share this post if your flatmate group has similar invoice pain
 - Drop your own shared-living split strategy in the comments
+
+## Beginner guide: Use this without stress
+
+If you are not technical, follow this in order:
+
+1. Open the project folder on your laptop.
+2. Install dependencies:
+
+   ```powershell
+   npm.cmd install
+   python -m pip install -r requirements-dev.txt
+   ```
+
+3. Start the workspace server:
+
+   ```powershell
+   npm.cmd run serve
+   ```
+
+4. Open this URL in your browser:
+
+   ```
+   http://127.0.0.1:4317
+   ```
+
+5. Click **Sync from Zepto** to download latest orders and invoices.
+6. Wait for the sync to finish, then move through these tabs:
+   - **Review Queue** for overall health
+   - **Exceptions** to fix problem orders first
+   - **Line Items** to tag grocery lines as personal/shared
+   - **Split Review** for final settlement-ready checklist
+   - **Data Sources** to verify where each file came from
+7. Tag each line or order with split notes and save.
+8. Export and use the workbook section for your final Splitwise or share with your roommate.
+
+Quick beginner tips:
+
+- Start with `05-workbench` and `04-exceptions` first so unresolved items are fixed early.
+- Keep the app open on desktop for the month-end review session.
+- If something fails, do `npm.cmd run workflow:skip-download` if you already have invoices in `invoices/` and only want a parse/reconcile refresh.
